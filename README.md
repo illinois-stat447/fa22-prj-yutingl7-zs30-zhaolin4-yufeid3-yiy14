@@ -3,7 +3,7 @@
 ## Project Proposal
 COVID swept the world in 2020, impacting economic development worldwide. We want to understand the extent to which COVID affects GDP per capita in each state in America. 
 We are also interested in how COVID affects people's travel. We chose air transportation as the subject of our analysis. We used data to observe number of airlines in 
-each state and connect them with GDP to find relationships and conclude how COVID affect both. We will visualize trends of airlines and GDP in recent years.
+each state and connect them with GDP to find relationships and conclude how COVID affect both. We will visualize trends of airlines and GDP in recent years and conbined them with COVID trends to make proper conclusions.
 
 ## Sources
 COVID daily cases https://covid19.who.int/WHO-COVID-19-global-data.csv
