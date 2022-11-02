@@ -1,0 +1,35 @@
+---
+title: "Project_first_draft"
+output: html_document
+date: "2022-11-02"
+author: "yutingl7-zs30-zhaolin4-yufeid3-yiy14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+players_data = read.csv("/Users/zeanli/Desktop/2021-2022 Football Player Stats.csv", sep = ";")
+players = read.csv("/Users/zeanli/Desktop/players_22.csv")
+p_data = as_tibble(players_data)
+
+full_data = p_data |> 
+  inner_join(players, by = c("Player" = "long_name")) |> 
+  group_by(Pos) |> 
+  summarise(wage = mean(wage_eur))
+
+ggplot(data = full_data) +
+  geom_col(aes(x = Pos, y = wage, fill = Pos)) +
+  ggtitle("FIFA 2021-2022 players average weekly wage by position")
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
