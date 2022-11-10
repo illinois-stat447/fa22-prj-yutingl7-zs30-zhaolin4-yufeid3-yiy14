@@ -16,7 +16,7 @@ library(ggplot2)
 ```
 
 ```{r}
-players_data = read.csv("2021-2022 Football Player Stats.csv", sep = ";")
+players_data = read.csv("/Users/zeanli/Desktop/2021-2022 Football Player Stats.csv", sep = ";")
 players = read.csv("/Users/zeanli/Desktop/players_22.csv")
 p_data = as_tibble(players_data)
 
