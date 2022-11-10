@@ -5,4 +5,3 @@ The FIFA World Cup will be hold in Qatar in late 2022. And this competition is o
 
 
 Therefore, in this project, we will try to train the dataset to figure out the most influential factors of their annual salary based on their performance data in 2022 via various methodologies like subset selection, linear regression, lasso regression, ridge regression, etc. As a result, we will develop the models from the training dataset to get corresponding outcomes based on the inputs as a recommended solution or interpretation for this promise research field of sports management.
->>>>>>> 1df56d7358f510293727d0569edff287cf5cdd5d
