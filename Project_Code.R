@@ -92,25 +92,25 @@ ggplot(data = p_gen_lea_avg_order) +
 
 ## analyze player wage by position in the richest 5 clubs and the poorest 5 clubs from league 1
 
-##########p_top10 = p_gen |> 
-##########  drop_na(wage_eur, league_level, club_name) |> 
-##########  filter(league_level == 1) |> 
-##########  select(club_name, wage_eur) |> 
-##########  group_by(club_name) |> 
-##########  summarise(club_avg_wage = mean(wage_eur), .groups = "drop") |> 
-##########  arrange(desc(club_avg_wage)) |> 
-##########  head(10)
-##########
-##########p_top10_wage = p_joined |> 
-##########  filter(club_name != "FC Bayern München") |> 
-##########  #filter(club_name %in% c("Real Madrid CF", "Manchester City", "Manchester United", "FC Barcelona")) |> 
-##########  drop_na(wage_eur) |> 
-##########  group_by(club_name, Pos) |> 
-##########  summarise(avg_wage = mean(wage_eur), .groups = "drop")
-##########  
-##########ggplot(data = p_top10_wage) +
-##########  geom_col(aes(x = Pos, y = avg_wage, fill = Pos)) +
-##########  facet_wrap( ~ club_name)
+#########p_top10 = p_gen |> 
+#########  drop_na(wage_eur, league_level, club_name) |> 
+#########  filter(league_level == 1) |> 
+#########  select(club_name, wage_eur) |> 
+#########  group_by(club_name) |> 
+#########  summarise(club_avg_wage = mean(wage_eur), .groups = "drop") |> 
+#########  arrange(desc(club_avg_wage)) |> 
+#########  head(10)
+#########
+#########p_top10_wage = p_joined |> 
+#########  filter(club_name != "FC Bayern München") |> 
+#########  #filter(club_name %in% c("Real Madrid CF", "Manchester City", "Manchester United", "FC Barcelona")) |> 
+#########  drop_na(wage_eur) |> 
+#########  group_by(club_name, Pos) |> 
+#########  summarise(avg_wage = mean(wage_eur), .groups = "drop")
+#########  
+#########ggplot(data = p_top10_wage) +
+#########  geom_col(aes(x = Pos, y = avg_wage, fill = Pos)) +
+#########  facet_wrap( ~ club_name)
 
 
 ## detailed information for wage
