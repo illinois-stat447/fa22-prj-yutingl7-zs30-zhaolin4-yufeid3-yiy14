@@ -5,7 +5,6 @@ install.packages("ggplot2")
 install.packages("tidyverse")
 install.packages("data.table")
 
-
 ## load libraries from packages
 
 library(dplyr)
@@ -24,6 +23,15 @@ player_joined = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa2
 p_gen = as_tibble(player_general)
 p_sea = as_tibble(player_season)
 p_joined = as_tibble(player_joined)
+
+
+
+##########
+
+summary(p_gen$wage_eur)
+boxplot(p_gen$wage_eur)
+
+##########
 
 ##
 ## plot weekly wage by players' age, and then analysis the factors that affect their wage, such as their potential
@@ -113,8 +121,6 @@ ggplot(data = p_gen_lea_avg_order) +
 #########  facet_wrap( ~ club_name)
 
 
-## detailed information for wage
-
 # international reputation
 
 p_int = p_gen |> 
@@ -136,6 +142,7 @@ p_overall = p_gen |>
 ggplot(data = p_overall) +
   geom_point(aes(x = overall, y = wage)) +
   geom_smooth(aes(x = overall, y = wage), method = "loess", formula = y ~ x)
+
   
 p_potential = p_gen |> 
   drop_na(potential, wage_eur) |> 
