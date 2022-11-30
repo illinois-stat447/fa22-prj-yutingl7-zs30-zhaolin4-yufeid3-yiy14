@@ -15,9 +15,9 @@ library(data.table)
 
 ## load dataset from local file location
 
-player_general = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/dataset/players_22.csv")
-player_season = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/dataset/players_stats_22.csv", sep = ";")
-player_joined = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/dataset/joined_df.csv")
+player_general = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_22.csv")
+player_season = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_stats_22.csv", sep = ";")
+player_joined = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_joined.csv")
 
 ## convert dataset into data.table or tibble for better operation
 
