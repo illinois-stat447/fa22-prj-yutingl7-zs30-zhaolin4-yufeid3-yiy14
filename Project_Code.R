@@ -24,8 +24,6 @@ p_gen = as_tibble(player_general)
 p_sea = as_tibble(player_season)
 p_joined = as_tibble(player_joined)
 
-
-
 ##########
 
 summary(p_gen$wage_eur)
@@ -83,43 +81,79 @@ ggplot(data = p_gen_lea_avg_order) +
 ## plot average weekly wage by position
 ## create a tibble with position and average weekly wage for that position
 
-##########p_full = p_gen |> 
-##########  inner_join(p_sea, by = c("long_name" = "Player")) |> 
-##########  group_by(Pos) |> 
-##########  summarise(wage = round(mean(wage_eur), digits = 0), .groups = "drop")
-##########
-############ using ggplot to plot the average weekly wage by position
-##########
-##########ggplot(data = p_full) +
-##########  geom_col(aes(x = Pos, y = wage, fill = Pos), alpha = 0.6) +
-##########  ggtitle("FIFA 2021-2022 Players Average Weekly Wage by Position", subtitle = "(Wage measured in EUR)") +
-##########  geom_text(aes(x = Pos, y = wage, label = wage), alpha = 1) +
-##########  theme_bw() +
-##########  xlab("Player Position") +
-##########  ylab("Average Weekly Wage")
+####################p_full = p_gen |> 
+####################  inner_join(p_sea, by = c("long_name" = "Player")) |> 
+####################  group_by(Pos) |> 
+####################  summarise(wage = round(mean(wage_eur), digits = 0), .groups = "drop")
+####################
+###################### using ggplot to plot the average weekly wage by position
+####################
+####################ggplot(data = p_full) +
+####################  geom_col(aes(x = Pos, y = wage, fill = Pos), alpha = 0.6) +
+####################  ggtitle("FIFA 2021-2022 Players Average Weekly Wage by Position", subtitle = "(Wage measured in EUR)") +
+####################  geom_text(aes(x = Pos, y = wage, label = wage), alpha = 1) +
+####################  theme_bw() +
+####################  xlab("Player Position") +
+####################  ylab("Average Weekly Wage")
 
-## analyze player wage by position in the richest 5 clubs and the poorest 5 clubs from league 1
+## analyze player wage by position in the richest 9 clubs from league 1
 
-#########p_top10 = p_gen |> 
-#########  drop_na(wage_eur, league_level, club_name) |> 
-#########  filter(league_level == 1) |> 
-#########  select(club_name, wage_eur) |> 
-#########  group_by(club_name) |> 
-#########  summarise(club_avg_wage = mean(wage_eur), .groups = "drop") |> 
-#########  arrange(desc(club_avg_wage)) |> 
-#########  head(10)
-#########
-#########p_top10_wage = p_joined |> 
-#########  filter(club_name != "FC Bayern München") |> 
-#########  #filter(club_name %in% c("Real Madrid CF", "Manchester City", "Manchester United", "FC Barcelona")) |> 
-#########  drop_na(wage_eur) |> 
-#########  group_by(club_name, Pos) |> 
-#########  summarise(avg_wage = mean(wage_eur), .groups = "drop")
-#########  
-#########ggplot(data = p_top10_wage) +
-#########  geom_col(aes(x = Pos, y = avg_wage, fill = Pos)) +
-#########  facet_wrap( ~ club_name)
+p_top9 = p_gen |> 
+  drop_na(wage_eur, league_level, club_name) |> 
+  filter(league_level == 1) |> 
+  select(club_name, wage_eur) |> 
+  group_by(club_name) |> 
+  summarise(club_avg_wage = mean(wage_eur), .groups = "drop") |> 
+  arrange(desc(club_avg_wage)) |> 
+  head(9)
 
+p_top9_wage = p_gen |> 
+  filter(club_name %in% p_top9$club_name) |> 
+  drop_na(wage_eur)
+
+p_top9_F = p_top9_wage |> 
+  filter(club_position %in% c("ST", "CF", "RS", "LS", "RF", "LF", "RW", "LW")) |> 
+  group_by(club_name) |> 
+  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
+  ungroup()
+
+p_top9_M = p_top9_wage |> 
+  filter(club_position %in% c("RCM", "CDM", "RDM", "LCM", "CAM", "LDM", "LM", "RM", "CM", "LAM", "RAM")) |> 
+  group_by(club_name) |> 
+  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
+  ungroup()
+
+p_top9_D = p_top9_wage |> 
+  filter(club_position %in% c("LCB", "RCB", "LB", "RB", "CB", "RWB", "LWB")) |> 
+  group_by(club_name) |> 
+  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
+  ungroup()
+
+p_top9_GK = p_top9_wage |> 
+  filter(club_position == "GK") |> 
+  group_by(club_name) |> 
+  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
+  ungroup()
+
+ggplot(data = p_top9_F) +
+  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
+  ggtitle("Average Wage of Forward Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
+  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
+
+ggplot(data = p_top9_M) +
+  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
+  ggtitle("Average Wage of Midfield Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
+  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
+
+ggplot(data = p_top9_D) +
+  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
+  ggtitle("Average Wage of Defense Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
+  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
+
+ggplot(data = p_top9_GK) +
+  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
+  ggtitle("Average Wage of Goal Keeper Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
+  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
 
 # international reputation
 
@@ -133,6 +167,7 @@ ggplot(data = p_int) +
   geom_col(aes(x = international_reputation, y = avg_wage, fill = international_reputation), alpha = 0.7) +
   geom_text(aes(x = international_reputation, y = index, label = avg_wage, color = international_reputation))
 
+# wage by overall and potential 
 
 p_overall = p_gen |> 
   drop_na(overall, wage_eur) |> 
@@ -143,7 +178,6 @@ ggplot(data = p_overall) +
   geom_point(aes(x = overall, y = wage)) +
   geom_smooth(aes(x = overall, y = wage), method = "loess", formula = y ~ x)
 
-  
 p_potential = p_gen |> 
   drop_na(potential, wage_eur) |> 
   mutate(wage = wage_eur / 1000) |> 
