@@ -1,13 +1,9 @@
-## install required packages to complete the project
+## load libraries
 
-install.packages("dplyr")
-install.packages("ggplot2")
-install.packages("tidyverse")
-install.packages("data.table")
-
-## load libraries from packages
-
+library(readr)
 library(dplyr)
+library(ISLR2)
+library(glmnet)
 library(ggplot2)
 library(tidyverse)
 library(data.table)
@@ -15,21 +11,16 @@ library(data.table)
 ## load dataset from local file location
 
 player_general = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_22.csv")
-player_season = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_stats_22.csv", sep = ";")
-player_joined = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_joined.csv")
 
 ## convert dataset into data.table or tibble for better operation
 
 p_gen = as_tibble(player_general)
-p_sea = as_tibble(player_season)
-p_joined = as_tibble(player_joined)
 
-##########
+##
 
 summary(p_gen$wage_eur)
 boxplot(p_gen$wage_eur)
-
-##########
+##
 
 ##
 ## plot weekly wage by players' age, and then analysis the factors that affect their wage, such as their potential
@@ -77,24 +68,6 @@ ggplot(data = p_gen_lea_avg_order) +
   geom_density(aes(x = avg_wage), color = "purple") +
   ggtitle("Density Plot for Average Weekly Wage", subtitle = "wage measured in EUR") +
   xlab("Average Weekly Wage")
-
-## plot average weekly wage by position
-## create a tibble with position and average weekly wage for that position
-
-####################p_full = p_gen |> 
-####################  inner_join(p_sea, by = c("long_name" = "Player")) |> 
-####################  group_by(Pos) |> 
-####################  summarise(wage = round(mean(wage_eur), digits = 0), .groups = "drop")
-####################
-###################### using ggplot to plot the average weekly wage by position
-####################
-####################ggplot(data = p_full) +
-####################  geom_col(aes(x = Pos, y = wage, fill = Pos), alpha = 0.6) +
-####################  ggtitle("FIFA 2021-2022 Players Average Weekly Wage by Position", subtitle = "(Wage measured in EUR)") +
-####################  geom_text(aes(x = Pos, y = wage, label = wage), alpha = 1) +
-####################  theme_bw() +
-####################  xlab("Player Position") +
-####################  ylab("Average Weekly Wage")
 
 ## analyze player wage by position in the richest 9 clubs from league 1
 
@@ -192,98 +165,147 @@ ggplot(data = p_potential) +
 ############
 
 #players that are GOAL KEEPER
-p_gk = p_gen |> 
-  filter(player_positions == "GK") |> 
-  select(skill_long_passing, movement_reactions, power_jumping, mentality_composure,
-         goalkeeping_diving, goalkeeping_handling, goalkeeping_kicking, goalkeeping_positioning,
-         goalkeeping_reflexes, goalkeeping_speed, wage_eur) |> 
+p_gk = p_gen |>
+  filter(club_position == "GK") |>
+  select(9,12,73:78)|>
   na.omit()
 
-gk_reg1 = lm(wage_eur ~ skill_long_passing + movement_reactions + power_jumping + mentality_composure +
-                   goalkeeping_diving + goalkeeping_handling + goalkeeping_kicking + goalkeeping_positioning +
-                   goalkeeping_reflexes + goalkeeping_speed, data = p_gk)
-summary(gk_reg1)
+set.seed(1)
+train_gk = sample(c(TRUE,FALSE), nrow(p_gk), rep = TRUE)
+test_gk = (!train_gk)
+gk.train = p_gk[train_gk, ]
+gk.test = p_gk[test_gk, ]
 
-gk_reg2 = lm(wage_eur ~ skill_long_passing + goalkeeping_diving + goalkeeping_handling + goalkeeping_reflexes, data = p_gk)
-summary(gk_reg2)
+lm.fit_gk = lm(wage_eur~., data = gk.train)
+lm.pred_gk = predict(lm.fit_gk, gk.test, type = "response")
+summary(lm.fit_gk)
+
+mean((lm.pred_gk - gk.test$wage_eur) ^ 2)
 
 #players that are FORWARD
-p_F = p_gen |>
+p_f = p_gen |>
   filter(club_position %in% c("ST", "CF", "RS", "LS", "RF", "LF", "RW", "LW")) |> 
-  select(height_cm, 44:72, wage_eur) |> 
+  select(9, 12, 44:72) |> 
   na.omit()
 
-f_reg1 = lm(wage_eur ~ height_cm + attacking_crossing + attacking_finishing + 
-              attacking_heading_accuracy + attacking_short_passing + attacking_volleys + 
-              skill_dribbling + skill_curve + skill_fk_accuracy + skill_long_passing + 
-              skill_ball_control + movement_acceleration + movement_sprint_speed + 
-              movement_agility + movement_reactions + movement_balance + power_shot_power + 
-              power_jumping + power_stamina +  power_strength + power_long_shots + 
-              mentality_aggression + mentality_interceptions + mentality_positioning + 
-              mentality_vision + mentality_penalties + mentality_composure + 
-              defending_marking_awareness + defending_standing_tackle + defending_sliding_tackle, 
-            data = p_F)
-summary(f_reg1)
+set.seed(1)
+train_f = sample(c(TRUE,FALSE), nrow(p_f), rep = TRUE)
+test_f = (!train_f)
+f.train = p_f[train_f, ]
+f.test = p_f[test_f, ]
 
-f_reg2 = lm(wage_eur ~ height_cm + attacking_finishing + skill_ball_control + 
-              movement_sprint_speed + movement_reactions + movement_balance + 
-              mentality_vision, data = p_F)
-summary(f_reg2)
+lm.fit_f = lm(wage_eur~., data = f.train)
+lm.pred_f = predict(lm.fit_f, f.test, type = "response")
+summary(lm.fit_f)
+
+mean((lm.pred_f - f.test$wage_eur) ^ 2)
 
 #players that are MIDFIELD
-p_M = p_gen |> 
+p_m = p_gen |> 
   filter(club_position %in% c("RCM", "CDM", "RDM", "LCM", "CAM", "LDM", "LM", "RM", "CM", "LAM", "RAM")) |> 
-  select(height_cm, 44:72, wage_eur) |> 
+  select(9, 12, 44:72) |> 
   na.omit()
 
-m_reg1 = lm(wage_eur ~ height_cm + attacking_crossing + attacking_finishing + 
-              attacking_heading_accuracy + attacking_short_passing + attacking_volleys + 
-              skill_dribbling + skill_curve + skill_fk_accuracy + skill_long_passing + 
-              skill_ball_control + movement_acceleration + movement_sprint_speed + 
-              movement_agility + movement_reactions + movement_balance + power_shot_power + 
-              power_jumping + power_stamina +  power_strength + power_long_shots + 
-              mentality_aggression + mentality_interceptions + mentality_positioning + 
-              mentality_vision + mentality_penalties + mentality_composure + 
-              defending_marking_awareness + defending_standing_tackle + defending_sliding_tackle, 
-            data = p_M)
-summary(m_reg1)
+set.seed(1)
+train_m = sample(c(TRUE,FALSE), nrow(p_m), rep = TRUE)
+test_m = (!train_m)
+m.train = p_m[train_m, ]
+m.test = p_m[test_m, ]
 
-m_reg2 = lm(wage_eur ~ height_cm + attacking_crossing + attacking_short_passing + attacking_volleys +
-              skill_ball_control + movement_reactions + movement_balance + power_long_shots + mentality_interceptions, 
-            data = p_M)
-summary(m_reg2)
+lm.fit_m = lm(wage_eur~., data = m.train)
+lm.pred_m = predict(lm.fit_m, m.test, type = "response")
+summary(lm.fit_m)
 
-m_reg3 = lm(wage_eur ~ height_cm + attacking_crossing + attacking_short_passing + attacking_volleys +
-              skill_ball_control + movement_reactions + movement_balance + power_long_shots, 
-            data = p_M)
-summary(m_reg3)
+mean((lm.pred_m - m.test$wage_eur) ^ 2)
 
 #players that are DEFENDER
-p_D = p_gen |> 
+p_d = p_gen |> 
   filter(club_position %in% c("LCB", "RCB", "LB", "RB", "CB", "RWB", "LWB")) |> 
-  select(height_cm, 44:72, wage_eur) |> 
+  select(9, 12, 44:72) |> 
   na.omit()
 
-d_reg1 = lm(wage_eur ~ height_cm + attacking_crossing + attacking_finishing + 
-              attacking_heading_accuracy + attacking_short_passing + attacking_volleys + 
-              skill_dribbling + skill_curve + skill_fk_accuracy + skill_long_passing + 
-              skill_ball_control + movement_acceleration + movement_sprint_speed + 
-              movement_agility + movement_reactions + movement_balance + power_shot_power + 
-              power_jumping + power_stamina +  power_strength + power_long_shots + 
-              mentality_aggression + mentality_interceptions + mentality_positioning + 
-              mentality_vision + mentality_penalties + mentality_composure + 
-              defending_marking_awareness + defending_standing_tackle + defending_sliding_tackle, 
-            data = p_D)
-summary(d_reg1)
+set.seed(1)
+train_d = sample(c(TRUE,FALSE), nrow(p_d), rep = TRUE)
+test_d = (!train_d)
+d.train = p_d[train_d, ]
+d.test = p_d[test_d, ]
 
-d_reg2 = lm(wage_eur ~ height_cm + attacking_finishing + skill_dribbling + skill_fk_accuracy + 
-              movement_sprint_speed + movement_agility + movement_reactions + power_jumping + 
-              power_strength + power_long_shots + mentality_vision + mentality_penalties + 
-              defending_marking_awareness + defending_standing_tackle + defending_sliding_tackle, 
-            data = p_D)
-summary(d_reg2)
+lm.fit_d = lm(wage_eur~., data = d.train)
+lm.pred_d = predict(lm.fit_d, d.test, type = "response")
+summary(lm.fit_d)
 
+mean((lm.pred_d - d.test$wage_eur) ^ 2)
 
+###########
 
+### GK
 
+train_gk.mat = model.matrix(wage_eur~., data = gk.train)
+test_gk.mat = model.matrix(wage_eur~., data = gk.test)
 
+set.seed(1)
+cv.out_gk = cv.glmnet(train_gk.mat, gk.train$wage_eur, alpha = 1)
+bestlam_gk = cv.out_gk$lambda.min
+bestlam_gk
+
+lasso.mod_gk = glmnet(train_gk.mat, gk.train$wage_eur, alpha = 1)
+lasso.pred_gk = predict(lasso.mod_gk, s = bestlam_gk, newx = test_gk.mat)
+mean((lasso.pred_gk - gk.test$wage_eur) ^ 2)
+
+lasso.coef_gk = predict(lasso.mod_gk, type = "coefficients", s = bestlam_gk)
+length(lasso.coef_gk[lasso.coef_gk != 0])
+lasso.coef_gk
+
+### F
+
+train_f.mat = model.matrix(wage_eur~., data = f.train)
+test_f.mat = model.matrix(wage_eur~., data = f.test)
+
+set.seed(1)
+cv.out_f = cv.glmnet(train_f.mat, f.train$wage_eur, alpha = 1)
+bestlam_f = cv.out_f$lambda.min
+bestlam_f
+
+lasso.mod_f = glmnet(train_f.mat, f.train$wage_eur, alpha = 1)
+lasso.pred_f = predict(lasso.mod_f, s = bestlam_f, newx = test_f.mat)
+mean((lasso.pred_f - f.test$wage_eur) ^ 2)
+
+lasso.coef_f = predict(lasso.mod_f, type = "coefficients", s = bestlam_f)
+length(lasso.coef_f[lasso.coef_f != 0])
+lasso.coef_f
+
+### M
+
+train_m.mat = model.matrix(wage_eur~., data = m.train)
+test_m.mat = model.matrix(wage_eur~., data = m.test)
+
+set.seed(1)
+cv.out_m = cv.glmnet(train_m.mat, m.train$wage_eur, alpha = 1)
+bestlam_m = cv.out_m$lambda.min
+bestlam_m
+
+lasso.mod_m = glmnet(train_m.mat, m.train$wage_eur, alpha = 1)
+lasso.pred_m = predict(lasso.mod_m, s = bestlam_m, newx = test_m.mat)
+mean((lasso.pred_m - m.test$wage_eur) ^ 2)
+
+lasso.coef_m = predict(lasso.mod_m, type = "coefficients", s = bestlam_m)
+length(lasso.coef_m[lasso.coef_m != 0])
+lasso.coef_m
+
+### D
+
+train_d.mat = model.matrix(wage_eur~., data = d.train)
+test_d.mat = model.matrix(wage_eur~., data = d.test)
+
+set.seed(1)
+cv.out_d = cv.glmnet(train_d.mat, d.train$wage_eur, alpha = 1)
+bestlam_d = cv.out_d$lambda.min
+bestlam_d
+
+lasso.mod_d = glmnet(train_d.mat, d.train$wage_eur, alpha = 1)
+lasso.pred_d = predict(lasso.mod_d, s = bestlam_d, newx = test_d.mat)
+mean((lasso.pred_d - d.test$wage_eur) ^ 2)
+
+lasso.coef_d = predict(lasso.mod_d, type = "coefficients", s = bestlam_d)
+length(lasso.coef_d[lasso.coef_d != 0])
+lasso.coef_d
