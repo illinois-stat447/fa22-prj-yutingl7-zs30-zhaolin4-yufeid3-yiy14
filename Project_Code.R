@@ -170,7 +170,7 @@ p_gk = p_gen |>
   select(9,12,73:78)|>
   na.omit()
 
-set.seed(1)
+set.seed(42)
 train_gk = sample(c(TRUE,FALSE), nrow(p_gk), rep = TRUE)
 test_gk = (!train_gk)
 gk.train = p_gk[train_gk, ]
@@ -188,7 +188,7 @@ p_f = p_gen |>
   select(9, 12, 44:72) |> 
   na.omit()
 
-set.seed(1)
+set.seed(42)
 train_f = sample(c(TRUE,FALSE), nrow(p_f), rep = TRUE)
 test_f = (!train_f)
 f.train = p_f[train_f, ]
@@ -206,7 +206,7 @@ p_m = p_gen |>
   select(9, 12, 44:72) |> 
   na.omit()
 
-set.seed(1)
+set.seed(42)
 train_m = sample(c(TRUE,FALSE), nrow(p_m), rep = TRUE)
 test_m = (!train_m)
 m.train = p_m[train_m, ]
@@ -224,7 +224,7 @@ p_d = p_gen |>
   select(9, 12, 44:72) |> 
   na.omit()
 
-set.seed(1)
+set.seed(42)
 train_d = sample(c(TRUE,FALSE), nrow(p_d), rep = TRUE)
 test_d = (!train_d)
 d.train = p_d[train_d, ]
@@ -243,7 +243,7 @@ mean((lm.pred_d - d.test$wage_eur) ^ 2)
 train_gk.mat = model.matrix(wage_eur~., data = gk.train)
 test_gk.mat = model.matrix(wage_eur~., data = gk.test)
 
-set.seed(1)
+set.seed(42)
 cv.out_gk = cv.glmnet(train_gk.mat, gk.train$wage_eur, alpha = 1)
 bestlam_gk = cv.out_gk$lambda.min
 bestlam_gk
@@ -261,7 +261,7 @@ lasso.coef_gk
 train_f.mat = model.matrix(wage_eur~., data = f.train)
 test_f.mat = model.matrix(wage_eur~., data = f.test)
 
-set.seed(1)
+set.seed(42)
 cv.out_f = cv.glmnet(train_f.mat, f.train$wage_eur, alpha = 1)
 bestlam_f = cv.out_f$lambda.min
 bestlam_f
@@ -279,7 +279,7 @@ lasso.coef_f
 train_m.mat = model.matrix(wage_eur~., data = m.train)
 test_m.mat = model.matrix(wage_eur~., data = m.test)
 
-set.seed(1)
+set.seed(42)
 cv.out_m = cv.glmnet(train_m.mat, m.train$wage_eur, alpha = 1)
 bestlam_m = cv.out_m$lambda.min
 bestlam_m
@@ -297,7 +297,7 @@ lasso.coef_m
 train_d.mat = model.matrix(wage_eur~., data = d.train)
 test_d.mat = model.matrix(wage_eur~., data = d.test)
 
-set.seed(1)
+set.seed(42)
 cv.out_d = cv.glmnet(train_d.mat, d.train$wage_eur, alpha = 1)
 bestlam_d = cv.out_d$lambda.min
 bestlam_d
