@@ -8,23 +8,21 @@ library(ggplot2)
 library(tidyverse)
 library(data.table)
 
-## load dataset from local file location
+## load dataset from GitHub url 
 
-player_general = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_22.csv")
+url = "https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_22.csv"
+player_general = read.csv(url)
 
-## convert dataset into data.table or tibble for better operation
+## convert dataset into tibble for better operation
 
 p_gen = as_tibble(player_general)
 
-##
+## summary and plot a boxplot for players' weekly wage
 
 summary(p_gen$wage_eur)
 boxplot(p_gen$wage_eur)
-##
 
-##
-## plot weekly wage by players' age, and then analysis the factors that affect their wage, such as their potential
-##
+## plot weekly wage by players' age
 
 p_gen_age = p_gen |> 
   group_by(age) |> 
@@ -37,9 +35,7 @@ ggplot(data = p_gen_age) +
   xlab("Player Age") +
   ylab("Average Weekly Wage")
 
-##
 ## plot weekly wage by players' league 
-##
 
 p_gen_lea_avg = p_gen |>
   drop_na(league_name, wage_eur, league_level) |> 
@@ -69,66 +65,7 @@ ggplot(data = p_gen_lea_avg_order) +
   ggtitle("Density Plot for Average Weekly Wage", subtitle = "wage measured in EUR") +
   xlab("Average Weekly Wage")
 
-## analyze player wage by position in the richest 9 clubs from league 1
-
-p_top9 = p_gen |> 
-  drop_na(wage_eur, league_level, club_name) |> 
-  filter(league_level == 1) |> 
-  select(club_name, wage_eur) |> 
-  group_by(club_name) |> 
-  summarise(club_avg_wage = mean(wage_eur), .groups = "drop") |> 
-  arrange(desc(club_avg_wage)) |> 
-  head(9)
-
-p_top9_wage = p_gen |> 
-  filter(club_name %in% p_top9$club_name) |> 
-  drop_na(wage_eur)
-
-p_top9_F = p_top9_wage |> 
-  filter(club_position %in% c("ST", "CF", "RS", "LS", "RF", "LF", "RW", "LW")) |> 
-  group_by(club_name) |> 
-  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
-  ungroup()
-
-p_top9_M = p_top9_wage |> 
-  filter(club_position %in% c("RCM", "CDM", "RDM", "LCM", "CAM", "LDM", "LM", "RM", "CM", "LAM", "RAM")) |> 
-  group_by(club_name) |> 
-  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
-  ungroup()
-
-p_top9_D = p_top9_wage |> 
-  filter(club_position %in% c("LCB", "RCB", "LB", "RB", "CB", "RWB", "LWB")) |> 
-  group_by(club_name) |> 
-  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
-  ungroup()
-
-p_top9_GK = p_top9_wage |> 
-  filter(club_position == "GK") |> 
-  group_by(club_name) |> 
-  summarise(avg_wage = mean(na.omit(wage_eur))) |> 
-  ungroup()
-
-ggplot(data = p_top9_F) +
-  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
-  ggtitle("Average Wage of Forward Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
-  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
-
-ggplot(data = p_top9_M) +
-  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
-  ggtitle("Average Wage of Midfield Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
-  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
-
-ggplot(data = p_top9_D) +
-  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
-  ggtitle("Average Wage of Defense Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
-  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
-
-ggplot(data = p_top9_GK) +
-  geom_col(aes(x = club_name, y = avg_wage, fill = club_name)) +
-  ggtitle("Average Wage of Goal Keeper Players in Richest 9 Clubs", subtitle = "Wage in EUR") +
-  geom_text(aes(x = club_name, y = avg_wage, label = round(avg_wage, digits = 0)))
-
-# international reputation
+## international reputation
 
 p_int = p_gen |> 
   drop_na(international_reputation) |> 
@@ -140,7 +77,7 @@ ggplot(data = p_int) +
   geom_col(aes(x = international_reputation, y = avg_wage, fill = international_reputation), alpha = 0.7) +
   geom_text(aes(x = international_reputation, y = index, label = avg_wage, color = international_reputation))
 
-# wage by overall and potential 
+## wage by overall and potential 
 
 p_overall = p_gen |> 
   drop_na(overall, wage_eur) |> 
@@ -160,11 +97,7 @@ ggplot(data = p_potential) +
   geom_point(aes(x = potential, y = wage)) +
   geom_smooth(aes(x = potential, y = wage), method = "loess", formula = y ~ x)
 
-############
-############
-############
-
-#players that are GOAL KEEPER
+## players that are GOAL KEEPER
 p_gk = p_gen |>
   filter(club_position == "GK") |>
   select(9,12,73:78)|>
@@ -182,7 +115,7 @@ summary(lm.fit_gk)
 
 mean((lm.pred_gk - gk.test$wage_eur) ^ 2)
 
-#players that are FORWARD
+## players that are FORWARD
 p_f = p_gen |>
   filter(club_position %in% c("ST", "CF", "RS", "LS", "RF", "LF", "RW", "LW")) |> 
   select(9, 12, 44:72) |> 
@@ -200,7 +133,7 @@ summary(lm.fit_f)
 
 mean((lm.pred_f - f.test$wage_eur) ^ 2)
 
-#players that are MIDFIELD
+## players that are MIDFIELD
 p_m = p_gen |> 
   filter(club_position %in% c("RCM", "CDM", "RDM", "LCM", "CAM", "LDM", "LM", "RM", "CM", "LAM", "RAM")) |> 
   select(9, 12, 44:72) |> 
@@ -218,7 +151,7 @@ summary(lm.fit_m)
 
 mean((lm.pred_m - m.test$wage_eur) ^ 2)
 
-#players that are DEFENDER
+## players that are DEFENDER
 p_d = p_gen |> 
   filter(club_position %in% c("LCB", "RCB", "LB", "RB", "CB", "RWB", "LWB")) |> 
   select(9, 12, 44:72) |> 
@@ -236,9 +169,7 @@ summary(lm.fit_d)
 
 mean((lm.pred_d - d.test$wage_eur) ^ 2)
 
-###########
-
-### GK
+## GK
 
 train_gk.mat = model.matrix(wage_eur~., data = gk.train)
 test_gk.mat = model.matrix(wage_eur~., data = gk.test)
@@ -256,7 +187,7 @@ lasso.coef_gk = predict(lasso.mod_gk, type = "coefficients", s = bestlam_gk)
 length(lasso.coef_gk[lasso.coef_gk != 0])
 lasso.coef_gk
 
-### F
+## F
 
 train_f.mat = model.matrix(wage_eur~., data = f.train)
 test_f.mat = model.matrix(wage_eur~., data = f.test)
@@ -274,7 +205,7 @@ lasso.coef_f = predict(lasso.mod_f, type = "coefficients", s = bestlam_f)
 length(lasso.coef_f[lasso.coef_f != 0])
 lasso.coef_f
 
-### M
+## M
 
 train_m.mat = model.matrix(wage_eur~., data = m.train)
 test_m.mat = model.matrix(wage_eur~., data = m.test)
@@ -292,7 +223,7 @@ lasso.coef_m = predict(lasso.mod_m, type = "coefficients", s = bestlam_m)
 length(lasso.coef_m[lasso.coef_m != 0])
 lasso.coef_m
 
-### D
+## D
 
 train_d.mat = model.matrix(wage_eur~., data = d.train)
 test_d.mat = model.matrix(wage_eur~., data = d.test)
