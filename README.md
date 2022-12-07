@@ -1,6 +1,16 @@
 # fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14
 
-## Project Proposal
-The FIFA World Cup will be held in Qatar in late 2022. And this competition is one of the grandest international contests, attracting people around the world.  We have noticed that there is a trend that some star players’ annual salary is much higher than the average wage, and certain potential players have their salary below market value compared to other players, and thus resulting in the uneven situation among the player trading market and the basic standard of the expected value. Therefore, we plan to analyze what factors influence their salaries. Since EA game "FIFA 2022" is an up-to-date reflecction on real world FIFA, we use the dataset from EA FIFA 2022 to perform our analysis.  
+## Project Proposal - FIFA 2022
+The FIFA World Cup will be held in Qatar in late 2022. And this competition is one of the grandest international contests, attracting people around the world.  We have noticed that there is a trend that some star players’ wage is much higher than the average wage, and certain potential players have their wage below market value compared to other players, and thus resulting in the uneven situation among the player trading market and the basic standard of the expected value. Therefore, we plan to analyze what factors influence FIFA soccer players' wages. We use dataset from EA "FIFA 2022", an EA game which is an up-to-date reflecction on real world FIFA, to perform our analysis.  
 
-In this project, we try to train the dataset to figure out the most influential factors, such as ages, clubs, and positions, of their annual salary based on their performance data in 2022 via various methodologies like subset selection, linear regression, lasso regression, ridge regression, etc. We will mainly focus on the position factor and try to quantify their position through data to compare their overall potential. As a result, we will combine several data sets and develop the models from the training dataset to get corresponding outcomes based on the inputs as a recommended solution or interpretation for this promise research field of sports management.
+In this project, we first plot graphs of several factors that we believe would affect one player's wage, such as ages, league level, and overall scores, etc. Then, we try to train the dataset to figure out the most influential factors of their annual salary based on their performance data in 2022 via various methodologies like linear regression and lasso regression. We will mainly focus on their objective physial skills and try to obtain a prediction model for their wage based on these factors. 
+
+## Project Report
+The project report can be found as "stat447-project-final.pdf" and "stat447-project-final.Rmd" in our GitHub Repo.
+
+## Presentation
+The following link is our presentation video stored at U of i box. 
+
+
+
+
