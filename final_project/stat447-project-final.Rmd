@@ -1,0 +1,517 @@
+---
+title: '**Study of FIFA 22 Players'' Wage and Affecting Factors**'
+author:
+- Lorena Lu(yutingl7)
+- Yi Yang(yiy14)
+- Yufei Duan(yufeid3)
+- Zean Li(zhaolin4)
+- Zhongwen Shen(zs30)
+subtitle: STAT 447 Group Project
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  pdf_document:
+    toc: yes
+    number_sections: yes
+---
+
+\bigskip\bigskip\bigskip
+
+
+```{r, fig.align = 'center', out.width = "50%", out.height = "50%", echo = FALSE}
+knitr::include_graphics("uiuc.jpg")
+```
+
+\newpage
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Introduction
+\bigskip
+
+The FIFA World Cup will be held in Qatar in late 2022. And this competition is 
+one of the grandest international contests, attracting people around the world. 
+We have noticed that there is a trend that some star players’ wage is much higher 
+than the average wage, and certain potential players have their wage below market 
+value compared to other players, and thus resulting in the uneven situation among 
+the player trading market and the basic standard of the expected value. Therefore, 
+we plan to analyze what factors influence FIFA soccer players' wages. We use dataset 
+from "FIFA 2022", an EA game which is an up-to-date reflecction on real world FIFA, 
+to perform our analysis.
+
+In this project, we first plot graphs of several factors that we believe would 
+affect one player's wage, such as ages, league level, and overall scores, etc. 
+Then, we try to train the dataset to figure out the most influential factors of 
+their annual salary based on their performance data in 2022 via various methodologies 
+like linear regression and lasso regression. We will mainly focus on their objective 
+physial skills and try to obtain a prediction model for their wage based on these 
+factors.
+\bigskip\bigskip\bigskip
+
+# Setup
+\bigskip
+
+```{r, results='hide', message=FALSE}
+## load libraries
+
+library(readr)
+library(dplyr)
+library(ISLR2)
+library(glmnet)
+library(ggplot2)
+library(tidyverse)
+library(data.table)
+
+```
+\bigskip
+
+```{r}
+## load dataset from local file location
+
+player_general = read.csv("https://raw.githubusercontent.com/illinois-stat447/fa22-prj-yutingl7-zs30-zhaolin4-yufeid3-yiy14/main/datasets/players_22.csv")
+```
+\bigskip
+
+```{r}
+## convert dataset into data.table or tibble for better operation
+
+p_gen = as_tibble(player_general)
+```
+\bigskip
+
+The “p_gen” dataset contains most of the personal information we need to analyze 
+what factors influenced different player’s wage, including their height, age, 
+potentials, etc. 
+\bigskip\bigskip
+
+\newpage
+
+# Visualization
+\bigskip
+
+```{r}
+summary(p_gen$wage_eur)
+boxplot(p_gen$wage_eur)
+```
+\bigskip
+
+We present a summary and a box plot of the average weekly wage. We can clearly 
+see there are plenty of outliers in the boxplot. The third quartile is only €8000, 
+but the max value is €350000. This is a huge difference and also represents an 
+extreme income inequality. We will find out what factors caused this phenomenon.
+\bigskip
+
+```{r}
+## plot weekly wage by players' age, and then analyze the factors that affect 
+## their wage, such as their potential
+
+p_gen_age = p_gen |> 
+  group_by(age) |> 
+  summarise(wage = mean(na.omit(wage_eur)), .groups = "drop")
+
+ggplot(data = p_gen_age) +
+  geom_point(aes(x = age, y = wage), color = "black") +
+  geom_smooth(aes(x = age, y = wage), method = "loess", formula = y ~ x, 
+              color = "blue") +
+  ggtitle("FIFA 2021-2022 Players Average Weekly Wage by Age", 
+          subtitle = "wage measured in EUR") +
+  xlab("Player Age") +
+  ylab("Average Weekly Wage")
+```
+\bigskip
+
+We first considered age factor, so we grouped the p_gen dataset by age and calculated 
+the average wage of different age region. We can clearly see from the plot that 
+the average wage increases at first and reach the peak at the age around 30, and 
+the wage gradually goes down as the age decreased. We can also conclude an almost 
+linear relationship between age and average wage, with a higher standard error 
+from 40 to 50. This may due to their potential, which is their abilities, that 
+varies their wage.
+\bigskip
+
+```{r}
+## plot weekly wage by players' league 
+##
+
+p_gen_lea_avg = p_gen |>
+  drop_na(league_name, wage_eur, league_level) |> 
+  filter(league_level == 1) |> 
+  select(league_name, wage_eur) |>
+  group_by(league_name) |>
+  summarise(avg_wage = mean(wage_eur),
+            tot_wage = sum(wage_eur),
+            med_wage = median(wage_eur),
+            .groups = "drop")
+
+p_gen_lea_avg_order = tibble::rowid_to_column(p_gen_lea_avg, "index")
+
+p_gen_lea_avg_order_filter = p_gen_lea_avg_order |> 
+  filter(avg_wage >= 10000) |> 
+  mutate(avg_wage = avg_wage - 1000)
+
+ggplot(data = p_gen_lea_avg_order) +
+  geom_point(aes(x = index, y = avg_wage)) +
+  geom_text(data = p_gen_lea_avg_order_filter, 
+            aes(x = index, y = avg_wage, label = league_name), color = "purple") +
+  ggtitle("Dot Plot for Average Weekly Wage", subtitle = "wage measured by EUR") +
+  xlab("League Index") +
+  ylab("Average Weekly Wage")
+```
+\bigskip
+
+We then focused on the top ranked clubs in league level one which could be more 
+representative. We calculated average, total, and median wage for each league and 
+selected the league with average wage more than €10,000. From the dot plot we have 
+highlighted 9 leagues that met the criteria, and these leagues will be the main 
+target for our analysis. 
+\bigskip
+
+```{r}
+ggplot(data = p_gen_lea_avg_order) +
+  geom_density(aes(x = avg_wage), color = "purple") +
+  ggtitle("Density Plot for Average Weekly Wage", subtitle = "wage measured in EUR") +
+  xlab("Average Weekly Wage")
+```
+\bigskip
+
+The density plot shows that there is a huge proportion of leagues with average 
+weekly wage less than €10,000. There are three little peaks in €20,000, €30,000, 
+and €50,000, corresponding to the highlighted leagues in the dot plot.
+\bigskip
+
+```{r}
+# international reputation
+
+p_int = p_gen |> 
+  drop_na(international_reputation) |> 
+  group_by(international_reputation) |> 
+  summarise(avg_wage = round(mean(na.omit(wage_eur)), digits = 2), .groups = "drop") |> 
+  mutate(index = avg_wage + 5000)
+
+ggplot(data = p_int) +
+  geom_col(aes(x = international_reputation, 
+               y = avg_wage, 
+               fill = international_reputation), alpha = 0.7) +
+  geom_text(aes(x = international_reputation, 
+                y = index, 
+                label = avg_wage, 
+                color = international_reputation))
+```
+\bigskip
+
+This plot shows player with higher international reputation will have higher 
+average wage.
+\bigskip
+
+```{r}
+# wage by overall and potential 
+
+p_overall = p_gen |> 
+  drop_na(overall, wage_eur) |> 
+  mutate(wage = wage_eur / 1000) |> 
+  select(overall, wage)
+
+ggplot(data = p_overall) +
+  geom_point(aes(x = overall, y = wage)) +
+  geom_smooth(aes(x = overall, y = wage), method = "loess", formula = y ~ x)
+
+p_potential = p_gen |> 
+  drop_na(potential, wage_eur) |> 
+  mutate(wage = wage_eur / 1000) |> 
+  select(potential, wage)
+
+ggplot(data = p_potential) +
+  geom_point(aes(x = potential, y = wage)) +
+  geom_smooth(aes(x = potential, y = wage), method = "loess", formula = y ~ x)
+```
+\bigskip
+
+These two plots measure the overall performance and the potential of players, 
+and it indicates the average weekly wage increases as the player performed better. 
+We can conclude that average weekly wage has a positive relationship with player’s 
+overall performance and their potential.
+\bigskip
+
+\newpage
+
+# Prediction
+\bigskip
+
+After plotting the data, we began focus on the relationship between the players’ 
+weekly wage and skills in different positions. We divided different positions into 
+two groups: goalkeepers and non-goalkeepers. And for non-goalkeepers, we divided 
+them into forward, midfield, and defender based on their position. 
+\bigskip
+
+## Linear Regression
+\bigskip
+
+We first conducted linear regression model for different positions.
+\bigskip
+
+For goalkeepers, we selected skills that are related with goalkeepers, such as 
+goalkeeping handling and positioning, and conducted linear regression. We split 
+the dataset into two parts: training dataset and testing dataset. We used our 
+training dataset to obtain regression model and apply the model to our testing 
+dataset to see the test error rate. 
+
+\bigskip
+
+```{r}
+#players that are GOAL KEEPER
+
+p_gk = p_gen |>
+  filter(club_position == "GK") |>
+  select(9,12,73:78)|>
+  na.omit()
+
+set.seed(42)
+train_gk = sample(c(TRUE,FALSE), nrow(p_gk), rep = TRUE)
+test_gk = (!train_gk)
+gk.train = p_gk[train_gk, ]
+gk.test = p_gk[test_gk, ]
+
+lm.fit_gk = lm(wage_eur~., data = gk.train)
+lm.pred_gk = predict(lm.fit_gk, gk.test, type = "response")
+summary(lm.fit_gk)
+
+mean((lm.pred_gk - gk.test$wage_eur) ^ 2)
+
+```
+\bigskip
+
+We applied the same process for forward, midfield, and defender and obtained their 
+linear regression model.
+\bigskip
+
+```{r}
+#players that are FORWARD
+
+p_f = p_gen |>
+  filter(club_position %in% c("ST", "CF", "RS", "LS", "RF", "LF", "RW", "LW")) |> 
+  select(9, 12, 44:72) |> 
+  na.omit()
+
+set.seed(42)
+train_f = sample(c(TRUE,FALSE), nrow(p_f), rep = TRUE)
+test_f = (!train_f)
+f.train = p_f[train_f, ]
+f.test = p_f[test_f, ]
+
+lm.fit_f = lm(wage_eur~., data = f.train)
+lm.pred_f = predict(lm.fit_f, f.test, type = "response")
+summary(lm.fit_f)
+
+mean((lm.pred_f - f.test$wage_eur) ^ 2)
+
+```
+\bigskip
+
+
+```{r}
+#players that are MIDFIELD
+p_m = p_gen |> 
+  filter(club_position %in% c("RCM", "CDM", "RDM", "LCM", "CAM", "LDM", "LM", 
+                              "RM", "CM", "LAM", "RAM")) |> 
+  select(9, 12, 44:72) |> 
+  na.omit()
+
+set.seed(42)
+train_m = sample(c(TRUE,FALSE), nrow(p_m), rep = TRUE)
+test_m = (!train_m)
+m.train = p_m[train_m, ]
+m.test = p_m[test_m, ]
+
+lm.fit_m = lm(wage_eur~., data = m.train)
+lm.pred_m = predict(lm.fit_m, m.test, type = "response")
+summary(lm.fit_m)
+
+mean((lm.pred_m - m.test$wage_eur) ^ 2)
+
+```
+\bigskip
+
+
+```{r}
+#players that are DEFENDER
+
+p_d = p_gen |> 
+  filter(club_position %in% c("LCB", "RCB", "LB", "RB", "CB", "RWB", "LWB")) |> 
+  select(9, 12, 44:72) |> 
+  na.omit()
+
+set.seed(42)
+train_d = sample(c(TRUE,FALSE), nrow(p_d), rep = TRUE)
+test_d = (!train_d)
+d.train = p_d[train_d, ]
+d.test = p_d[test_d, ]
+
+lm.fit_d = lm(wage_eur~., data = d.train)
+lm.pred_d = predict(lm.fit_d, d.test, type = "response")
+summary(lm.fit_d)
+
+mean((lm.pred_d - d.test$wage_eur) ^ 2)
+
+```
+\bigskip\bigskip\bigskip
+
+\newpage
+
+## Lasso Regression
+
+We applied the second strategy, lasso regression, to our dataset. We used the Lamda 
+of cross-validation to find the best lasso model.
+\bigskip
+
+```{r}
+### GK
+
+train_gk.mat = model.matrix(wage_eur~., data = gk.train)
+test_gk.mat = model.matrix(wage_eur~., data = gk.test)
+
+set.seed(42)
+cv.out_gk = cv.glmnet(train_gk.mat, gk.train$wage_eur, alpha = 1)
+bestlam_gk = cv.out_gk$lambda.min
+bestlam_gk
+
+lasso.mod_gk = glmnet(train_gk.mat, gk.train$wage_eur, alpha = 1)
+lasso.pred_gk = predict(lasso.mod_gk, s = bestlam_gk, newx = test_gk.mat)
+mean((lasso.pred_gk - gk.test$wage_eur) ^ 2)
+
+lasso.coef_gk = predict(lasso.mod_gk, type = "coefficients", s = bestlam_gk)
+length(lasso.coef_gk[lasso.coef_gk != 0])
+lasso.coef_gk
+
+```
+\bigskip\bigskip\bigskip
+
+```{r}
+### F
+
+train_f.mat = model.matrix(wage_eur~., data = f.train)
+test_f.mat = model.matrix(wage_eur~., data = f.test)
+
+set.seed(42)
+cv.out_f = cv.glmnet(train_f.mat, f.train$wage_eur, alpha = 1)
+bestlam_f = cv.out_f$lambda.min
+bestlam_f
+
+lasso.mod_f = glmnet(train_f.mat, f.train$wage_eur, alpha = 1)
+lasso.pred_f = predict(lasso.mod_f, s = bestlam_f, newx = test_f.mat)
+mean((lasso.pred_f - f.test$wage_eur) ^ 2)
+
+lasso.coef_f = predict(lasso.mod_f, type = "coefficients", s = bestlam_f)
+length(lasso.coef_f[lasso.coef_f != 0])
+lasso.coef_f
+
+```
+\bigskip\bigskip\bigskip
+
+```{r}
+### M
+
+train_m.mat = model.matrix(wage_eur~., data = m.train)
+test_m.mat = model.matrix(wage_eur~., data = m.test)
+
+set.seed(42)
+cv.out_m = cv.glmnet(train_m.mat, m.train$wage_eur, alpha = 1)
+bestlam_m = cv.out_m$lambda.min
+bestlam_m
+
+lasso.mod_m = glmnet(train_m.mat, m.train$wage_eur, alpha = 1)
+lasso.pred_m = predict(lasso.mod_m, s = bestlam_m, newx = test_m.mat)
+mean((lasso.pred_m - m.test$wage_eur) ^ 2)
+
+lasso.coef_m = predict(lasso.mod_m, type = "coefficients", s = bestlam_m)
+length(lasso.coef_m[lasso.coef_m != 0])
+lasso.coef_m
+
+```
+\bigskip\bigskip\bigskip
+
+```{r}
+### D
+
+train_d.mat = model.matrix(wage_eur~., data = d.train)
+test_d.mat = model.matrix(wage_eur~., data = d.test)
+
+set.seed(42)
+cv.out_d = cv.glmnet(train_d.mat, d.train$wage_eur, alpha = 1)
+bestlam_d = cv.out_d$lambda.min
+bestlam_d
+
+lasso.mod_d = glmnet(train_d.mat, d.train$wage_eur, alpha = 1)
+lasso.pred_d = predict(lasso.mod_d, s = bestlam_d, newx = test_d.mat)
+mean((lasso.pred_d - d.test$wage_eur) ^ 2)
+
+lasso.coef_d = predict(lasso.mod_d, type = "coefficients", s = bestlam_d)
+length(lasso.coef_d[lasso.coef_d != 0])
+lasso.coef_d
+```
+\bigskip\bigskip\bigskip
+
+\newpage
+
+# Summary
+
+After comparing the test error rate (TRSS) of our linear regression and lasso 
+regression, we decided to use lasso regression as it is a better model for our 
+regression, and concluded four models for FIFA players' wage by their position 
+on the court. 
+\bigskip
+
+### Goalkeeper
+
+pred_gk = height_cm * 199.9548 + goalkeeping_diving * 236.6291 + 
+goalkeeping_handling * 1227.0017 + goalkeeping_kicking * 119.1639 + 
+goalkeeping_reflexes * 729.3857 - 185588.2082
+
+### Forward
+
+pred_f = attacking_finishing * 6.227994e+02 + skill_dribbling * 9.931592e+01 + 
+skill_fk_accuracy * 9.347063e+01 + skill_ball_control * 8.422616e+02 + 
+movement_sprint_speed * 2.572154e+02 + movement_reactions * 8.106642e+02 + 
+power_long_shots * 1.067886e+02 + mentality_positioning * 1.699747e+00 + 
+mentality_vision * 2.029903e+02 + defending_standing_tackle * 5.332260e+00 - 
+1.892451e+05
+
+### Midfield
+
+pred_m = height_cm * 1.433129e+02 + attacking_short_passing * 4.970238e+02 + 
+skill_dribbling * 4.666464e-01 + skill_long_passing * 8.613718e+00 + 
+skill_ball_control * 7.316160e+02 + movement_sprint_speed * 1.570555e+02 + 
+movement_reactions * 8.601317e+02 + power_jumping * 3.968384e+01 + 
+defending_marking_awareness * 4.419659e+01 - 1.712799e+05
+
+### Defender
+
+pred_d = height_cm * 1.661054e+02 + attacking_crossing * -2.007549e+01 + 
+attacking_finishing * 7.294878e+01 + attacking_heading_accuracy * 3.446315e+01 + 
+attacking_volleys * -2.462207e+01 + skill_dribbling * 7.124247e+01 + 
+skill_fk_accuracy * 3.793791e+00 + skill_ball_control * 2.104087e+01 + 
+movement_acceleration * 2.857307e+01 + movement_sprint_speed * 2.066053e+02 + 
+movement_agility * -6.228568e+01 + movement_reactions * 6.050392e+02 + 
+movement_balance * -2.164681e+01 + power_jumping * 2.069286e+01 + 
+power_strength * -7.066988e+01 + mentality_aggression * -6.493845e+01 + 
+mentality_interceptions * 9.028638e+01 + mentality_vision * 1.022002e+02 + 
+mentality_composure * 7.985868e+01 + defending_marking_awareness * 3.115622e+02 + 
+defending_standing_tackle * 5.030108e+02 + defending_sliding_tackle * 2.488225e+02 
+- 1.558632e+05
+\bigskip
+
+Based on our graphs and regression models, we can conclude that soccer players 
+start to grow as they enter this field and make the most money when they reach 
+30. Once a player get older than 30, there is a tendency for their wage to decline 
+as their physical abilities start to weaken. Besides, as a player's international 
+reputation, overall, and potential socre increase, their wage increase as well.
+\bigskip
+
+We chose our lasso regression model as our final prediction model. We can use the 
+models to predict a player’s wage based on their positions on the court and their 
+physical ability scores. We hope our prediction can help FIFA better decide a 
+player’s wage and therefore create a relatively fair market.
