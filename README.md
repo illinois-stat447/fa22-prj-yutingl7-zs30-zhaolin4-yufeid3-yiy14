@@ -10,7 +10,7 @@ The project report can be found as "stat447-project-final.pdf" and "stat447-proj
 
 ## Presentation
 The following link is our presentation video stored at U of i box. 
-
+https://uofi.app.box.com/file/1085187010165
 
 
 
