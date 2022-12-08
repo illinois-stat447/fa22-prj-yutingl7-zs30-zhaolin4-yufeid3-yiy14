@@ -6,7 +6,7 @@ The FIFA World Cup will be held in Qatar in late 2022. And this competition is o
 In this project, we first plot graphs of several factors that we believe would affect one player's wage, such as ages, league level, and overall scores, etc. Then, we try to train the dataset to figure out the most influential factors of their annual salary based on their performance data in 2022 via various methodologies like linear regression and lasso regression. We will mainly focus on their objective physial skills and try to obtain a prediction model for their wage based on these factors. 
 
 ## Project Report
-The project report can be found as "stat447-project-final.pdf" and "stat447-project-final.Rmd" in our GitHub Repo.
+The project report can be found as "stat447-project-final.pdf" and "stat447-project-final.Rmd" in "final_project” folder
 
 ## Presentation
 The following link is our presentation video stored at U of i box. 
