@@ -10,7 +10,7 @@ The project report can be found as "stat447-project-final.pdf" and "stat447-proj
 
 ## Presentation
 The following link is our presentation video stored at U of i box. 
-https://uofi.app.box.com/file/1085187010165
+https://uofi.box.com/s/galiknv5kf2nw0br2bvitzi95zijz4mf
 
 ## Data Source
 EA FIFA 22 Players Dataset https://www.kaggle.com/datasets/stefanoleone992/fifa-22-complete-player-dataset?select=players_22.csv
